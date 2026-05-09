@@ -8,3 +8,8 @@
 4. npm run start
 
 и все.
+
+
+<img width="1111" height="347" alt="image" src="https://github.com/user-attachments/assets/5e871be7-6613-4b43-a027-3345f7c24b7f" />
+
+<img width="1289" height="790" alt="image" src="https://github.com/user-attachments/assets/34171b4b-732f-490d-b4d0-fa20f82dea43" />
