@@ -1,0 +1,23 @@
+{
+  "name": "ai-helper",
+  "version": "1.0.0",
+  "description": "Hello World!",
+  "main": "dist/main.js",
+  "scripts": {
+    "copy-assets": "cp electron/tooltip.html dist/electron/tooltip.html && cp electron/tooltip-preload.js dist/electron/tooltip-preload.js",
+    "build": "tsc && npm run copy-assets",
+    "start": "npm run build && electron ."
+  },
+  "author": "Jane Doe",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/dotenv": "^6.1.1",
+    "@types/node": "^20.19.40",
+    "electron": "^42.0.1",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "ollama": "^0.6.3"
+  }
+}

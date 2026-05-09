@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      font-family: system-ui, sans-serif;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid #313244;
+      user-select: none;
+      overflow: hidden;
+      -webkit-app-region: drag;
+    }
+
+    .top-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #preview {
+      font-size: 12px;
+      color: #6c7086;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    button {
+      background: #7c3aed;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 5px 12px;
+      cursor: pointer;
+      font-size: 12px;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+    button:hover { background: #6d28d9; }
+    button:disabled { background: #4a4a6a; cursor: default; }
+
+    #result {
+      display: none;
+      margin-top: 10px;
+      font-size: 13px;
+      line-height: 1.5;
+      max-height: 220px;
+      overflow-y: auto;
+      color: #cdd6f4;
+      border-top: 1px solid #313244;
+      padding-top: 8px;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 2px;
+      height: 13px;
+      background: #7c3aed;
+      margin-left: 2px;
+      vertical-align: middle;
+      animation: blink 0.8s infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="top-row">
+    <span id="preview"></span>
+    <button id="askBtn">✨ ask AI</button>
+  </div>
+  <div id="result"></div>
+
+  <script>
+  let currentText = ''
+
+  const preview = document.getElementById('preview')
+  const askBtn = document.getElementById('askBtn')
+  const result = document.getElementById('result')
+
+  window.tooltip.onShow(({ text }) => {
+    currentText = text
+    preview.textContent = text
+    result.style.display = 'none'
+    result.textContent = ''
+    askBtn.disabled = false
+    askBtn.textContent = '✨ ask AI'
+  })
+
+  askBtn.onclick = () => {
+    if (!currentText) return
+    askBtn.disabled = true
+    askBtn.textContent = '⏳ Thinking...'
+    result.style.display = 'block'
+    result.innerHTML = '<span class="cursor"></span>'
+    window.tooltip.askAI(currentText)
+  }
+
+  window.tooltip.onChunk((chunk) => {
+    const cursor = result.querySelector('.cursor')
+    if (cursor) cursor.remove()
+    result.insertAdjacentText('beforeend', chunk)
+    result.insertAdjacentHTML('beforeend', '<span class="cursor"></span>')
+    result.scrollTop = result.scrollHeight
+  })
+
+  window.tooltip.onDone(() => {
+    const cursor = result.querySelector('.cursor')
+    if (cursor) cursor.remove()
+    askBtn.disabled = false
+    askBtn.textContent = '✨ ask AI'
+  })
+
+  window.tooltip.onError(() => {
+    result.textContent = '❌ Error getting AI response.'
+    askBtn.disabled = false
+    askBtn.textContent = '✨ ask AI'
+  })
+</script>
+</body>
+</html>
