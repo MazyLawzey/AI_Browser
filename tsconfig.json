@@ -13,6 +13,6 @@
     "declaration": true,
     "sourceMap": true
   },
-  "include": ["*.ts", "electron/preload.ts"],
-  "exclude": ["dist", "node_modules"]
+  "include": ["**/*.ts"],
+  "exclude": ["dist", "node_modules", "AI_Browser"]
 }

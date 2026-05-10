@@ -15,8 +15,11 @@ export const createWindow = (): void => {
     }
   })
 
-  mainWin.loadURL(process.env.START_URL || '')
+  const startURL = process.env.START_URL || `file://${path.join(__dirname, '../index.html')}`
+  mainWin.loadURL(startURL)
+  
   setupTooltip()
+  setupNavigation()
 }
 
 const createTooltipWindow = (): BrowserWindow => {
@@ -69,5 +72,14 @@ const setupTooltip = (): void => {
     } catch (e) {
       tooltipWin?.webContents.send('ai-error')
     }
+  })
+}
+
+const setupNavigation = (): void => {
+  ipcMain.on('navigate-page', (_event, direction: 'next' | 'prev') => {
+    if (!mainWin) return
+    
+    // Send navigation event to renderer process
+    mainWin.webContents.send('page-navigate', direction)
   })
 }
