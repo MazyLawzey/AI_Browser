@@ -4,7 +4,7 @@
   "description": "AI Helper for Electron",
   "main": "dist/main.js",
   "scripts": {
-    "copy-assets": "cp index.html dist/index.html && cp electron/tooltip.html dist/electron/tooltip.html && cp electron/tooltip-preload.js dist/electron/tooltip-preload.js",
+    "copy-assets": "shx cp index.html dist/index.html && shx cp electron/tooltip.html dist/electron/tooltip.html && shx cp electron/tooltip-preload.js dist/electron/tooltip-preload.js",
     "build": "tsc && npm run copy-assets",
     "start": "npm run build && electron ."
   },
@@ -14,6 +14,7 @@
     "@types/dotenv": "^6.1.1",
     "@types/node": "^20.19.40",
     "electron": "^42.0.1",
+    "shx": "^0.4.0",
     "typescript": "^5.9.3"
   },
   "dependencies": {
