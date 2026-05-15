@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Agent — Moodle</title>
+  <style>
+    html, body { height: 100%; margin: 0; padding: 0; }
+    body {
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+    }
+
+    webview {
+      width: 100%;
+      height: 100%;
+      border: none;
+      flex: 1;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    #toolbar {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      width: 280px;
+      background: rgba(30, 30, 30, 0.92);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 16px;
+      color: #eee;
+      z-index: 9999;
+      font-size: 13px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      user-select: none;
+    }
+
+    #toolbar .title {
+      font-weight: 700;
+      font-size: 15px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: grab;
+      user-select: none;
+    }
+
+    #toolbar .title:active { cursor: grabbing; }
+    #toolbar .title .drag-icon { margin-left: auto; opacity: 0.4; font-size: 14px; }
+
+    #toolbar .title .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      background: #666;
+    }
+
+    #toolbar .title .dot.running { background: #4caf50; box-shadow: 0 0 8px #4caf50; }
+    #toolbar .title .dot.error { background: #f44336; box-shadow: 0 0 8px #f44336; }
+    #toolbar .title .dot.stopped { background: #ff9800; box-shadow: 0 0 8px #ff9800; }
+
+    .btn-row { display: flex; gap: 8px; margin-bottom: 12px; }
+
+    .btn-row button {
+      flex: 1;
+      padding: 8px 0;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-row button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    #start-btn { background: #4caf50; color: #fff; }
+    #start-btn:hover:not(:disabled) { background: #43a047; }
+
+    #stop-btn { background: #f44336; color: #fff; }
+    #stop-btn:hover:not(:disabled) { background: #e53935; }
+
+    #status-label {
+      font-weight: 600;
+      margin-bottom: 2px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0.8;
+    }
+
+    #status-msg {
+      font-size: 12px;
+      opacity: 0.7;
+      margin-bottom: 10px;
+      min-height: 16px;
+    }
+
+    #log {
+      background: rgba(0,0,0,0.3);
+      border-radius: 6px;
+      padding: 8px;
+      max-height: 140px;
+      overflow-y: auto;
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 11px;
+      line-height: 1.5;
+      color: #aaa;
+    }
+
+    #log .entry::before { content: '> '; color: #555; }
+    #log .entry.error { color: #ef9a9a; }
+    #log .entry.success { color: #a5d6a7; }
+    #log .entry.info { color: #90caf9; }
+
+    #help-hint {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.6);
+      color: #aaa;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      z-index: 9998;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <webview id="agent-webview" allowpopups></webview>
+
+  <div id="toolbar">
+    <div class="title" id="drag-handle">
+      <span class="dot" id="status-dot"></span>
+      AI Agent
+      <span class="drag-icon">⠿</span>
+    </div>
+    <div class="btn-row">
+      <button id="start-btn">▶ Запустить</button>
+      <button id="stop-btn" disabled>■ Стоп</button>
+    </div>
+    <div id="status-label">Ожидание</div>
+    <div id="status-msg">Нажмите «Запустить», чтобы начать</div>
+    <div id="log"></div>
+  </div>
+
+  <script>
+    const webview = document.getElementById('agent-webview')
+    const startBtn = document.getElementById('start-btn')
+    const stopBtn = document.getElementById('stop-btn')
+    const statusLabel = document.getElementById('status-label')
+    const statusMsg = document.getElementById('status-msg')
+    const statusDot = document.getElementById('status-dot')
+    const logEl = document.getElementById('log')
+
+    // Force webview to fill window
+    function resizeWebview() {
+      webview.style.width = window.innerWidth + 'px'
+      webview.style.height = window.innerHeight + 'px'
+    }
+    resizeWebview()
+    window.addEventListener('resize', resizeWebview)
+
+    // Load Moodle
+    const moodleUrl = ''
+    webview.src = moodleUrl
+
+    // Register webview with main process when ready
+    webview.addEventListener('dom-ready', () => {
+      const id = webview.getWebContentsId()
+      if (window.electron && window.electron.agentRegisterWebview) {
+        window.electron.agentRegisterWebview(id)
+      }
+    })
+
+    // Log helper
+    let logEntries = []
+    function addLog(msg, type = 'info') {
+      logEntries.push({ msg, type })
+      if (logEntries.length > 80) logEntries.shift()
+      logEl.innerHTML = logEntries.map(e => `<div class="entry ${e.type}">${e.msg}</div>`).join('')
+      logEl.scrollTop = logEl.scrollHeight
+    }
+
+    function setStatus(state, msg) {
+      const labels = { idle: 'Ожидание', running: 'Выполняется', error: 'Ошибка', stopped: 'Остановлено' }
+      statusLabel.textContent = labels[state] || state
+      statusMsg.textContent = msg
+      statusDot.className = 'dot ' + state
+      startBtn.disabled = state === 'running'
+      stopBtn.disabled = state !== 'running'
+      addLog(msg, state === 'error' ? 'error' : state === 'running' ? 'info' : 'success')
+    }
+
+    // Button handlers
+    startBtn.addEventListener('click', () => {
+      if (window.electron && window.electron.agentStart) {
+        setStatus('running', 'Запуск агента...')
+        window.electron.agentStart()
+      }
+    })
+
+    stopBtn.addEventListener('click', () => {
+      if (window.electron && window.electron.agentStop) {
+        window.electron.agentStop()
+      }
+    })
+
+    // Listen for status from main
+    if (window.electron && window.electron.onAgentStatus) {
+      window.electron.onAgentStatus((data) => {
+        setStatus(data.status, data.message)
+      })
+    }
+
+    // Draggable toolbar
+    const toolbar = document.getElementById('toolbar')
+    const dragHandle = document.getElementById('drag-handle')
+    let dragOffsetX = 0, dragOffsetY = 0
+
+    dragHandle.addEventListener('mousedown', (e) => {
+      dragOffsetX = e.clientX - toolbar.offsetLeft
+      dragOffsetY = e.clientY - toolbar.offsetTop
+      document.addEventListener('mousemove', onDrag)
+      document.addEventListener('mouseup', stopDrag)
+    })
+
+    function onDrag(e) {
+      toolbar.style.left = (e.clientX - dragOffsetX) + 'px'
+      toolbar.style.top = (e.clientY - dragOffsetY) + 'px'
+      toolbar.style.right = 'auto'
+    }
+
+    function stopDrag() {
+      document.removeEventListener('mousemove', onDrag)
+      document.removeEventListener('mouseup', stopDrag)
+    }
+
+    addLog('Окно агента загружено. Ожидание команды...')
+  </script>
+</body>
+</html>

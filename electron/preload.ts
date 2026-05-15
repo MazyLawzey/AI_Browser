@@ -6,6 +6,23 @@ contextBridge.exposeInMainWorld('electron', {
   onPageNavigate: (callback: (direction: 'next' | 'prev') => void) => {
     ipcRenderer.on('page-navigate', (_event, direction) => callback(direction))
   },
+
+  // Agent methods
+  agentRegisterWebview: (id: number) => {
+    ipcRenderer.send('agent-register-webview', id)
+  },
+  agentStart: () => {
+    ipcRenderer.send('agent-start')
+  },
+  agentStop: () => {
+    ipcRenderer.send('agent-stop')
+  },
+  onAgentStatus: (callback: (data: { status: string; message: string }) => void) => {
+    ipcRenderer.on('agent-status', (_event, data) => callback(data))
+  },
+  agentGetStatus: (): Promise<string> => {
+    return ipcRenderer.invoke('agent-get-status')
+  },
 })
 
 // Text selection handling

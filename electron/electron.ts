@@ -1,9 +1,11 @@
-import { BrowserWindow, ipcMain } from 'electron'
+import { BrowserWindow, ipcMain, webContents } from 'electron'
 import * as path from 'path'
 import { generateResponseStream } from '../ai/ai'
+import { MoodleAgent } from '../ai/agent'
 
 let mainWin: BrowserWindow | null = null
 let tooltipWin: BrowserWindow | null = null
+const moodleAgent = new MoodleAgent()
 
 export const createWindow = (): void => {
   mainWin = new BrowserWindow({
@@ -12,6 +14,7 @@ export const createWindow = (): void => {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
+      webviewTag: true,
     }
   })
 
@@ -20,6 +23,7 @@ export const createWindow = (): void => {
   
   setupTooltip()
   setupNavigation()
+  setupAgent()
 }
 
 const createTooltipWindow = (): BrowserWindow => {
@@ -81,5 +85,27 @@ const setupNavigation = (): void => {
     
     // Send navigation event to renderer process
     mainWin.webContents.send('page-navigate', direction)
+  })
+}
+
+const setupAgent = (): void => {
+  ipcMain.on('agent-register-webview', (_event, webviewId: number) => {
+    const wc = webContents.fromId(webviewId)
+    if (wc) moodleAgent.setWebContents(wc)
+  })
+
+  ipcMain.on('agent-start', () => {
+    moodleAgent.onStatus((status, message) => {
+      mainWin?.webContents.send('agent-status', { status, message })
+    })
+    moodleAgent.start()
+  })
+
+  ipcMain.on('agent-stop', () => {
+    moodleAgent.stop()
+  })
+
+  ipcMain.handle('agent-get-status', () => {
+    return moodleAgent.getStatus()
   })
 }
