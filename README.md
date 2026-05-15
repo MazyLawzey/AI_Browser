@@ -68,6 +68,8 @@ npm run agent
 
 ## Скриншоты
 
+<img width="1269" height="787" alt="Screenshot 2026-05-15 142428" src="https://github.com/user-attachments/assets/cbe1d8e5-8dbe-4e68-9308-48caafe33f51" />
+
 <img width="1111" alt="Браузер с ИИ-помощником" src="https://github.com/user-attachments/assets/5e871be7-6613-4b43-a027-3345f7c24b7f">
 
 <img width="1289" alt="AI-агент в работе" src="https://github.com/user-attachments/assets/34171b4b-732f-490d-b4d0-fa20f82dea43">
