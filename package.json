@@ -4,10 +4,11 @@
   "description": "AI Helper for Electron",
   "main": "dist/main.js",
   "scripts": {
-    "copy-assets": "cp index.html dist/index.html && cp electron/tooltip.html dist/electron/tooltip.html && cp electron/tooltip-preload.js dist/electron/tooltip-preload.js",
+    "copy-assets": "cp src/electron/tooltip.html dist/electron/tooltip.html && cp src/electron/agent.html dist/electron/agent.html && cp index.html dist/index.html",
     "build": "tsc && npm run copy-assets",
-    "start": "npm run build && electron .",
-    "agent": "npm run build && electron dist/agent.js"
+    "start": "npm run build && electron dist/main.js",
+    "agent": "npm run build && electron dist/agent.js",
+    "dev": "tsc --watch"
   },
   "author": "MazyLawzey",
   "license": "MIT",
