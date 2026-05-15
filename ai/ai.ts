@@ -2,7 +2,7 @@ import ollama from 'ollama'
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-const MODEL = process.env.OLLAMA_MODEL ?? 'spotice'
+const MODEL = process.env.OLLAMA_MODEL ?? ''
 
 const SYSTEM_PROMPT = `Ты помощник. Отвечай коротко и по делу — только ответ, без вступлений, объяснений и лишних слов. Только вариант ответа, больше ничего. Если ты сомневаешься, просто скажи "не знаю".`
 

@@ -4,11 +4,7 @@
   "description": "AI Helper for Electron",
   "main": "dist/main.js",
   "scripts": {
-<<<<<<< Updated upstream
     "copy-assets": "cp index.html dist/index.html && cp electron/tooltip.html dist/electron/tooltip.html && cp electron/tooltip-preload.js dist/electron/tooltip-preload.js",
-=======
-    "copy-assets": "shx cp index.html dist/index.html && shx cp electron/tooltip.html dist/electron/tooltip.html && shx cp electron/tooltip-preload.js dist/electron/tooltip-preload.js && shx cp electron/agent.html dist/electron/agent.html && shx cp electron/agent-preload.js dist/electron/agent-preload.js",
->>>>>>> Stashed changes
     "build": "tsc && npm run copy-assets",
     "start": "npm run build && electron .",
     "agent": "npm run build && electron dist/agent.js"

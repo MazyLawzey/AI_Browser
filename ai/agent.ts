@@ -4,7 +4,7 @@ import { generateResponseStream } from './ai'
 const MOODLE_URL = process.env.MOODLE_URL || ''
 const MOODLE_USERNAME = process.env.MOODLE_USERNAME || ''
 const MOODLE_PASSWORD = process.env.MOODLE_PASSWORD || ''
-const AGENT_MODEL = process.env.AGENT_MODEL || process.env.OLLAMA_MODEL || 'spotice'
+const AGENT_MODEL = process.env.AGENT_MODEL || process.env.OLLAMA_MODEL || ''
 
 type AgentStatus = 'idle' | 'running' | 'stopped' | 'error'
 type AgentCallback = (status: AgentStatus, message: string) => void
