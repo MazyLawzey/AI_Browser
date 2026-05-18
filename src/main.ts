@@ -4,10 +4,18 @@ import { getConfig } from './config'
 import { IpcEvents } from './types'
 import * as path from 'path'
 import { ipcMain } from 'electron'
+import { AIService } from './ai/ai-service'
 
 logger.info('Starting main process')
 
 const config = getConfig()  // No validation needed for main app
+let aiService: AIService | null = null
+
+try {
+  aiService = new AIService()
+} catch (e) {
+  logger.error('AI Service failed to init', e)
+}
 
 let mainWindow: BrowserWindow | null = null
 let tooltipWindow: BrowserWindow | null = null
@@ -23,9 +31,22 @@ const createWindow = (): void => {
     },
   })
 
-  const startURL = process.env.START_URL || `file://${path.join(__dirname, 'index.html')}`
-  mainWindow.loadURL(startURL)
+  const startURL = process.env.START_URL?.trim()
 
+  if (!startURL) {
+    mainWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(`
+      <!DOCTYPE html><html><body style="display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;background:#f5f5f5">
+      <div style="text-align:center;max-width:500px;padding:40px">
+        <h1 style="color:#e53935;font-size:28px;margin-bottom:16px">START_URL не указан</h1>
+        <p style="color:#666;font-size:15px;line-height:1.6">Откройте <code style="background:#eee;padding:2px 6px;border-radius:4px">.env</code> и укажите сайт:</p>
+        <pre style="background:#263238;color:#b2ccd6;padding:16px;border-radius:8px;text-align:left;font-size:13px;margin-top:12px">START_URL=https://example.com</pre>
+      </div></body></html>
+    `)}`)
+  } else {
+    mainWindow.loadURL(startURL)
+  }
+
+  mainWindow.webContents.openDevTools()
   setupIPC()
 }
 
@@ -73,7 +94,23 @@ const setupIPC = (): void => {
   ipcMain.on(IpcEvents.TOOLTIP_ASK_AI, async (_event, text: string) => {
     if (!tooltipWindow) return
     tooltipWindow.setSize(config.ui.tooltipWidth, 300)
-    // AI handling would go here
+
+    if (!aiService) {
+      logger.error('AI Service not initialized - check Ollama connection and OLLAMA_MODEL env var')
+      tooltipWindow?.webContents.send(IpcEvents.TOOLTIP_AI_ERROR)
+      return
+    }
+
+    try {
+      for await (const chunk of aiService.generateResponseStream(text)) {
+        if (!tooltipWindow) break
+        tooltipWindow.webContents.send(IpcEvents.TOOLTIP_AI_CHUNK, chunk)
+      }
+      tooltipWindow?.webContents.send(IpcEvents.TOOLTIP_AI_DONE)
+    } catch (e) {
+      logger.error('Error in AI response', e)
+      tooltipWindow?.webContents.send(IpcEvents.TOOLTIP_AI_ERROR)
+    }
   })
 
   // Navigation events

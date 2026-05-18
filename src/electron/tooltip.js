@@ -1,53 +1,36 @@
-/**
- * Tooltip renderer script
- * Handles UI interactions for the tooltip window
- */
+const preview = document.getElementById('preview')
+const askBtn = document.getElementById('askBtn')
+const resultDiv = document.getElementById('result')
 
 let currentText = ''
 
-const preview = document.getElementById('preview')
-const askBtn = document.getElementById('askBtn')
-const result = document.getElementById('result')
-
-if (!preview || !askBtn || !result) {
-  console.error('Required DOM elements not found')
-}
-
 window.tooltip.onShow(({ text }) => {
   currentText = text
-  if (preview) preview.textContent = text
-  result.style.display = 'none'
-  result.textContent = ''
+  preview.textContent = text.length > 50 ? text.slice(0, 50) + '…' : text
   askBtn.disabled = false
-  askBtn.textContent = '✨ ask AI'
+  resultDiv.style.display = 'none'
+  resultDiv.textContent = ''
 })
 
-askBtn.onclick = () => {
-  if (!currentText) return
-  askBtn.disabled = true
-  askBtn.textContent = '⏳ Thinking...'
-  result.style.display = 'block'
-  result.innerHTML = '<span class="cursor"></span>'
-  window.tooltip.askAI(currentText)
-}
-
 window.tooltip.onChunk((chunk) => {
-  const cursor = result.querySelector('.cursor')
-  if (cursor) cursor.remove()
-  result.insertAdjacentText('beforeend', chunk)
-  result.insertAdjacentHTML('beforeend', '<span class="cursor"></span>')
-  result.scrollTop = result.scrollHeight
+  resultDiv.style.display = 'block'
+  resultDiv.textContent += chunk
 })
 
 window.tooltip.onDone(() => {
-  const cursor = result.querySelector('.cursor')
-  if (cursor) cursor.remove()
   askBtn.disabled = false
-  askBtn.textContent = '✨ ask AI'
 })
 
 window.tooltip.onError(() => {
-  result.textContent = '❌ Error getting AI response.'
+  resultDiv.style.display = 'block'
+  resultDiv.innerHTML = '<span style="color: #f38ba8;">❌ Ошибка подключения к Ollama</span><br><span style="font-size: 11px; color: #a6adc8; margin-top: 4px; display: block;">Убедитесь что:<br>1. Ollama запущена (ollama serve)<br>2. Модель загружена (ollama pull gemma2)<br>3. OLLAMA_HOST и OLLAMA_MODEL указаны в .env</span>'
   askBtn.disabled = false
-  askBtn.textContent = '✨ ask AI'
+})
+
+askBtn.addEventListener('click', () => {
+  if (!currentText) return
+  askBtn.disabled = true
+  resultDiv.style.display = 'block'
+  resultDiv.textContent = ''
+  window.tooltip.askAI(currentText)
 })

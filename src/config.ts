@@ -9,6 +9,7 @@ export interface AppConfig {
     password: string
   }
   ollama: {
+    host: string
     model: string
     agentModel: string
   }
@@ -30,6 +31,7 @@ const buildConfig = (): AppConfig => {
       password: process.env.MOODLE_PASSWORD || '',
     },
     ollama: {
+      host: process.env.OLLAMA_HOST || 'http://localhost:11434',
       model: process.env.OLLAMA_MODEL || '',
       agentModel: process.env.AGENT_MODEL || process.env.OLLAMA_MODEL || '',
     },

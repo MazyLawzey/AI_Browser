@@ -4,11 +4,12 @@
   "description": "AI Helper for Electron",
   "main": "dist/main.js",
   "scripts": {
-    "copy-assets": "cp src/electron/tooltip.html dist/electron/tooltip.html && cp src/electron/agent.html dist/electron/agent.html && cp index.html dist/index.html",
+    "copy-assets": "shx cp src/electron/tooltip.html dist/electron/tooltip.html && shx cp src/electron/tooltip.js dist/electron/tooltip.js && shx cp src/electron/agent.html dist/electron/agent.html",
     "build": "tsc && npm run copy-assets",
     "start": "npm run build && electron dist/main.js",
     "agent": "npm run build && electron dist/agent.js",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "scratch": "shx rm -rf dist && npm run start"
   },
   "author": "MazyLawzey",
   "license": "MIT",
@@ -16,6 +17,7 @@
     "@types/dotenv": "^6.1.1",
     "@types/node": "^20.19.40",
     "electron": "^42.0.1",
+    "shx": "^0.4.0",
     "typescript": "^5.9.3"
   },
   "dependencies": {

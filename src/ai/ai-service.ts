@@ -1,4 +1,4 @@
-import ollama from 'ollama'
+import ollama, { Ollama } from 'ollama'
 import { getConfig } from '../config'
 import { logger } from '../utils/logger'
 import { IAIService } from '../core/interfaces'
@@ -15,6 +15,7 @@ export interface AIMessage {
  */
 export class AIService implements IAIService {
   private model: string
+  private ollama: Ollama
 
   private readonly systemPrompt = `Ты помощник. Отвечай коротко и по делу — только ответ, без вступлений, объяснений и лишних слов. Только вариант ответа, больше ничего. Если ты сомневаешься, просто скажи "не знаю".`
 
@@ -22,7 +23,8 @@ export class AIService implements IAIService {
     try {
       const config = getConfig(false, true)
       this.model = config.ollama.model
-      logger.debug('AIService initialized', { model: this.model })
+      this.ollama = new Ollama({ host: config.ollama.host })
+      logger.debug('AIService initialized', { model: this.model, host: config.ollama.host })
     } catch (error) {
       logger.error('Failed to initialize AIService', error)
       throw new AIServiceError(`Failed to initialize AI service: ${error instanceof Error ? error.message : String(error)}`)
@@ -37,7 +39,7 @@ export class AIService implements IAIService {
     try {
       logger.debug('Generating AI response stream', { model: this.model, promptLength: prompt.length })
 
-      const stream = await ollama.chat({
+      const stream = await this.ollama.chat({
         model: this.model,
         messages: [
           { role: 'system', content: this.systemPrompt },
